@@ -1,9 +1,9 @@
-# streamlit_app.py — Explorer de Distribuições com Fórmula (LaTeX) e Plotly + Descoberta a partir de dados
+# streamlit_app.py — Distribution Explorer with Formulas (LaTeX) and Plotly + Discovery from Data
 # ---------------------------------------------------------------------------------
-# - Plotly para PDF/PMF interativos
-# - Fórmulas renderizadas com LaTeX
-# - Upload de dados e função para sugerir/ajustar distribuições (AIC/BIC, KS/Chi²)
-# ---------------------------------------------------------------------------------
+# - Plotly for Interactive PDF/PMF
+# - Formulas rendered with LaTeX
+# - Data upload and function to suggest/fit distributions (AIC/BIC, KS/Chi²)
+# ------------------------------------------------------------------------------
 
 import base64
 import streamlit as st
@@ -29,7 +29,8 @@ def b64dec(s: str) -> str:
     return base64.b64decode(s.encode("ascii")).decode("utf-8")
 
 # -----------------------------------------------------
-# Catálogo de distribuições (baseado no seu)
+# distributins catalogy
+# - Catalog of distributions with parameters, formulas, and usage examples
 # -----------------------------------------------------
 
 distributions = {
@@ -152,7 +153,7 @@ distributions = {
 DISCRETE = {"Bernoulli", "Binomial", "Geométrica", "Hipergeométrica", "Binomial Negativa", "Poisson"}
 
 # -------------------------------------------
-# Construção do RV e avaliação
+# RV construction and evaluation
 # -------------------------------------------
 
 def build_frozen(name: str, params: dict):
@@ -198,7 +199,7 @@ def build_frozen(name: str, params: dict):
         return f(loc=float(params["mu"]), scale=float(params["sigma"]))
     raise ValueError("Distribuição desconhecida")
 
-
+# function to get support and values for plotting
 def support_and_values(name: str, frozen):
     if name in DISCRETE:
         try:
@@ -225,7 +226,7 @@ def support_and_values(name: str, frozen):
         ys = frozen.pdf(xs)
         return xs, ys
 
-
+# functions to plot distributions and data fits
 def plot_distribution(name: str, xs, ys):
     fig = go.Figure()
     if name in DISCRETE:
@@ -239,7 +240,7 @@ def plot_distribution(name: str, xs, ys):
     fig.update_layout(margin=dict(l=20, r=20, t=40, b=20), height=420, title=f"{name}")
     st.plotly_chart(fig, use_container_width=True)
 
-
+# Function to plot overlay data fit
 def plot_overlay_data_fit(name: str, frozen, data: np.ndarray):
     fig = go.Figure()
     if name in DISCRETE:
@@ -272,15 +273,15 @@ def plot_overlay_data_fit(name: str, frozen, data: np.ndarray):
     st.plotly_chart(fig, use_container_width=True)
 
 # -------------------------------------------
-# Detecção/ajuste automático a partir de dados
+# Automatic detection/adjustment from data
 # -------------------------------------------
 
 def is_integer_array(x: np.ndarray) -> bool:
     if x.size == 0:
         return False
-    return np.all(np.isfinite(x)) and np.allclose(x, np.round(x))
+    return bool(np.all(np.isfinite(x)) and np.allclose(x, np.round(x)))
 
-
+# Function to summarize data statistics
 def summarize_data(x: np.ndarray) -> dict:
     x = x[np.isfinite(x)]
     if x.size == 0:
@@ -397,7 +398,8 @@ def fit_candidate(name: str, x: np.ndarray):
 
     return None
 
-
+# function to suggest distributions based on data
+# - Fits multiple candidates and returns the best ones based on AIC/BIC
 def suggest_distributions(x: np.ndarray, max_out: int = 5):
     x = np.asarray(x).astype(float)
     x = x[np.isfinite(x)]
@@ -468,7 +470,7 @@ with colL:
 
     st.markdown("---")
     st.subheader("Seus dados (opcional)")
-    uploaded = st.file_uploader("Envie um CSV/XLSX com 1+ colunas numéricas", type=["csv", "xlsx", "xls"]) 
+    uploaded = st.file_uploader("Envie um CSV/XLSX com 1 coluna numérica", type=["csv", "xlsx", "xls"]) 
     df = None
     data_col = None
     x = np.array([])
@@ -485,7 +487,7 @@ with colL:
                 stats_d = summarize_data(x)
                 st.json(stats_d)
             else:
-                st.info("Não encontrei colunas numéricas.")
+                st.info("Não encontrei coluna numérica.")
         except Exception as e:
             st.error(f"Falha ao ler arquivo: {e}")
 
@@ -508,7 +510,7 @@ with colR:
 
 st.markdown("---")
 
-# 🔎 Descobrir distribuição a partir dos seus dados
+# Discover distribution from your data
 st.subheader("Descobrir distribuição a partir dos seus dados")
 detect_btn = st.button("Descobrir agora", disabled=("x" not in globals() or (isinstance(x, np.ndarray) and x.size == 0)))
 if detect_btn:
@@ -540,4 +542,5 @@ if detect_btn:
 st.markdown("---")
 st.caption("Dica: mova os controles para ver a PDF/PMF mudar. Fórmulas renderizadas com LaTeX. Gráficos com Plotly. Clique em 'Descobrir agora' após enviar dados.")
 st.caption("Feito com ChatGPT e Streamlit. Distribuições de probabilidade e ajuste automático a partir de dados.")
-st.caption("Fonte: https://zehmatias.com/data-science/distribuicoes-de-dados/")
+st.caption("Referência: https://zehmatias.com/data-science/distribuicoes-de-dados/")
+st.caption("Código fonte: https://github.com/filmateus/probability_distributions/blob/main/painel_distribuicoes2.py")
